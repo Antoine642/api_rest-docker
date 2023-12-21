@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  server:
+    build:
+      context: ./server-api
+    ports:
+      - "1001:1001"
+    env_file:
+      - ./server-api/.env
+    environment:
+      MONGO_URL: mongodb://mongo:27017/apirestaurants
+    depends_on:
+      - mongo
+    networks:
+      - api-network
+    volumes:
+      - server-data:/app/server/data
+
+  backoffice:
+    build:
+      context: ./backoffice-api-template
+    ports:
+      - "8080:80"
+    environment:
+      VITE_API_URL: http://server:1001/api
+    env_file:
+      - ./backoffice-api-template/.env
+    depends_on:
+      - mongo
+    networks:
+      - api-network
+    volumes:
+      - backoffice-data:/app/backoffice/data
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+  
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: apirestaurants
+    networks:
+      - api-network
+    volumes:
+      - mongo-data:/data/db
+
+networks:
+  api-network:
+    driver: bridge
+
+volumes:
+  server-data:
+  backoffice-data:
+  mongo-data:
